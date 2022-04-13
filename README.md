@@ -1,6 +1,6 @@
 # Tx Watcher
 
-### Setup
+## Setup
 
 Config on tx_watcher.py
 
