@@ -11,10 +11,6 @@ if __name__ == "__main__":
     import json
     from web3.providers.rpc import HTTPProvider
 
-    # We use tqdm library to render a nice progress bar in the console
-    # https://pypi.org/project/tqdm/
-    from tqdm import tqdm
-
     DEPOSIT_ADDRESS = "0x19CC89bF8f4F67E9255B574E65fADAa8e34a7667" # address received the token
     API_URL = "https://polygon-mainnet.infura.io/v3/API_KEY" # node url
     SC_ADDRESS = "0x74ba6A10978F643A84C0b37fCB599081079811cB" # token smart contract address
@@ -197,17 +193,9 @@ if __name__ == "__main__":
 
         # Render a progress bar in the console
         start = time.time()
-        with tqdm(total=blocks_to_watch) as progress_bar:
-            def _update_progress(start, end, current, current_block_timestamp, chunk_size, events_count):
-                if current_block_timestamp:
-                    formatted_time = current_block_timestamp.strftime("%d-%m-%Y")
-                else:
-                    formatted_time = "no block time available"
-                progress_bar.set_description(f"Current block: {current} ({formatted_time}), blocks in a watch batch: {chunk_size}, events processed in a batch {events_count}")
-                progress_bar.update(chunk_size)
 
-            # Run the watch
-            result, total_chunks_watched = transfer_watcher.watch(start_block, end_block, progress_callback=_update_progress)
+        # Run the watch
+        result, total_chunks_watched = transfer_watcher.watch(start_block, end_block)
 
         state.save()
         duration = time.time() - start

@@ -62,7 +62,7 @@ class TransferWatcherState(ABC):
 
 class TransferWatcher:
     def __init__(self, w3: Web3, contract: Contract, state: TransferWatcherState, events: List, filters: {},
-                 max_chunk_watch_size: int = 10000, max_request_retries: int = 30, request_retry_seconds: float = 3.0):
+                 max_chunk_watch_size: int = 3500, max_request_retries: int = 30, request_retry_seconds: float = 3.0):
 
         self.logger = logger
         self.contract = contract
@@ -175,7 +175,7 @@ class TransferWatcher:
         current_chuck_size = min(self.max_watch_chunk_size, current_chuck_size)
         return int(current_chuck_size)
 
-    def watch(self, start_block, end_block, start_chunk_size=20, progress_callback=Optional[Callable]) -> Tuple[
+    def watch(self, start_block, end_block, start_chunk_size=20) -> Tuple[
         list, int]:
 
         assert start_block <= end_block
@@ -213,10 +213,6 @@ class TransferWatcher:
 
             last_watch_duration = time.time() - start
             all_processed += new_entries
-
-            # Print progress bar
-            if progress_callback:
-                progress_callback(start_block, end_block, current_block, end_block_timestamp, chunk_size, len(new_entries))
 
             # Try to guess how many blocks to fetch over `eth_getLogs` API next time
             chunk_size = self.estimate_next_chunk_size(chunk_size, len(new_entries))
