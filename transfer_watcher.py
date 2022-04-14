@@ -17,7 +17,7 @@ from web3.middleware import geth_poa_middleware
 logger = logging.getLogger(__name__)
 
 
-class WatcherState(ABC):
+class TransferWatcherState(ABC):
     @abstractmethod
     def get_last_watched_block(self) -> int:
         """Number of the last block we have scanned on the previous cycle.
@@ -60,8 +60,8 @@ class WatcherState(ABC):
         Purges any potential minor reorg data.
         """
 
-class Watcher:
-    def __init__(self, w3: Web3, contract: Contract, state: WatcherState, events: List, filters: {},
+class TransferWatcher:
+    def __init__(self, w3: Web3, contract: Contract, state: TransferWatcherState, events: List, filters: {},
                  max_chunk_watch_size: int = 10000, max_request_retries: int = 30, request_retry_seconds: float = 3.0):
 
         self.logger = logger

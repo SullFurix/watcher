@@ -2,7 +2,7 @@ import datetime
 import time
 import logging
 import asyncio
-from watcher import Watcher, WatcherState
+from transfer_watcher import TransferWatcher, TransferWatcherState
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     ]
     """
 
-    class JSONifiedState(WatcherState):
+    class JSONifiedState(TransferWatcherState):
         def __init__(self):
             self.state = None
             self.fname = BLOCKCHAIN_NAME+"_state.json"
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             self.last_save = time.time()
 
         #
-        # WatcherState methods implemented below
+        # TransferWatcherState methods implemented below
         #
 
         def get_last_watched_block(self):
@@ -91,7 +91,7 @@ if __name__ == "__main__":
             pass
 
         def end_chunk(self, block_number):
-            # Next time the watcher is started we will resume from this block
+            # Next time the transfer watcher is started we will resume from this block
             self.state["last_watched_block"] = block_number
 
             # Save the database file for every minute
@@ -165,8 +165,8 @@ if __name__ == "__main__":
         state = JSONifiedState()
         state.restore()
 
-        # chain_id: int, w3: Web3, abi: dict, state: WatcherState, events: List, filters: {}, max_chunk_watch_size: int=10000
-        watcher = Watcher(
+        # chain_id: int, w3: Web3, abi: dict, state: TransferWatcherState, events: List, filters: {}, max_chunk_watch_size: int=10000
+        transfer_watcher = TransferWatcher(
             w3=w3,
             contract=ERC20,
             state=state,
@@ -183,14 +183,14 @@ if __name__ == "__main__":
         # since the last watch ended, we need to discard
         # the last few blocks from the previous watch results.
         chain_reorg_safety_blocks = MIN_CONFIRMATION
-        watcher.delete_potentially_forked_block_data(state.get_last_watched_block() - chain_reorg_safety_blocks)
+        transfer_watcher.delete_potentially_forked_block_data(state.get_last_watched_block() - chain_reorg_safety_blocks)
 
         # watch from [last block watched] - [latest ethereum block]
         # Note that our chain reorg safety blocks cannot go negative
 
         start_block = max(state.get_last_watched_block() - chain_reorg_safety_blocks, 0)
 
-        end_block = watcher.get_suggested_watch_end_block()
+        end_block = transfer_watcher.get_suggested_watch_end_block()
         blocks_to_watch = end_block - start_block
 
         print(f"Watching events from blocks {start_block} - {end_block}")
@@ -207,7 +207,7 @@ if __name__ == "__main__":
                 progress_bar.update(chunk_size)
 
             # Run the watch
-            result, total_chunks_watched = watcher.watch(start_block, end_block, progress_callback=_update_progress)
+            result, total_chunks_watched = transfer_watcher.watch(start_block, end_block, progress_callback=_update_progress)
 
         state.save()
         duration = time.time() - start
