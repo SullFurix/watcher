@@ -8,7 +8,7 @@
 `DEPOSIT_ADDRESS = "0x19CC89bF8f4F67E9255B574E65fADAa8e34a7667"`
 
 - Node API url(e.g infura url):
-`API_URL = "https://polygon-mainnet.infura.io/v3/APIKEY"`
+`API_URL = "https://polygon-mainnet.infura.io/v3/API_KEY"`
 
 - Address of Smart Contract Token(e.g Diabolo Token Address on polygon):
 `SC_ADDRESS = "0x74ba6A10978F643A84C0b37fCB599081079811cB"`

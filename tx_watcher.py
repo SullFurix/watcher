@@ -16,7 +16,7 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     DEPOSIT_ADDRESS = "0x19CC89bF8f4F67E9255B574E65fADAa8e34a7667" # address received the token
-    API_URL = "https://polygon-mainnet.infura.io/v3/api key" # node url
+    API_URL = "https://polygon-mainnet.infura.io/v3/API_KEY" # node url
     SC_ADDRESS = "0x74ba6A10978F643A84C0b37fCB599081079811cB" # token smart contract address
     MAX_LOG_LIMIT = 3499 # maximum log limit in one api call to node
     MIN_CONFIRMATION = 12 # minimum 12 confirmations
