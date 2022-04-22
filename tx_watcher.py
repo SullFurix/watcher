@@ -2,6 +2,7 @@ import datetime
 import time
 import logging
 import asyncio
+from price_watcher import PriceWatcher
 from transfer_watcher import TransferWatcher, TransferWatcherState
 from web3 import Web3
 from web3.datastructures import AttributeDict
@@ -11,13 +12,24 @@ if __name__ == "__main__":
     import json
     from web3.providers.rpc import HTTPProvider
 
-    DEPOSIT_ADDRESS = "0x19CC89bF8f4F67E9255B574E65fADAa8e34a7667" # address received the token
-    API_URL = "https://polygon-mainnet.infura.io/v3/API_KEY" # node url
+    INFURA_KEY = " :) " # node key
+    API_URL = "https://polygon-mainnet.infura.io/v3/%s" % (INFURA_KEY) # node url
+    BLOCKCHAIN_NAME = "polygon" # blockchain name for file system
     SC_ADDRESS = "0x74ba6A10978F643A84C0b37fCB599081079811cB" # token smart contract address
+    DEPOSIT_ADDRESS = "0x19CC89bF8f4F67E9255B574E65fADAa8e34a7667" # address received the token
+
+    MULTICALL_DEX_ADDRESS = "0x198B38312A9667db4eC4f11EE6Fc9b59132B3956" # contract to return multiple order on order book
+    DEX_ADDRESS = "0x658aF64B59974968012EE2f9B529eF39c6F91787" # dex contract
+    QUOTE_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" # quote token address for dex e.g : USDC
+    QUOTE_DECIMALS = 6 # decimals of quote token
+    BASE_ADDRESS = "0x74ba6A10978F643A84C0b37fCB599081079811cB" # base token address for dex e.g : DCASH
+    BASE_DECIMALS = 10 # decimals of base token
+
     MAX_LOG_LIMIT = 3499 # maximum log limit in one api call to node
-    MIN_CONFIRMATION = 12 # minimum 12 confirmations
+    MIN_CONFIRMATION = 126 # minimum 12 confirmations
     REFRESH_INTERVAL = 60 # 60 seconds
-    BLOCKCHAIN_NAME = "polygon"
+    SAVE_INTERVAL = 60 # Save the database file for every minute
+
 
     # Reduced ERC-20 ABI, only Transfer event
     ABI = """[
@@ -42,6 +54,53 @@ if __name__ == "__main__":
             ],
             "name": "Transfer",
             "type": "event"
+        }
+    ]
+    """
+
+    MULTICALL_DEX_ABI = """[
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "name": "dex",
+                    "type": "address"
+                },
+                {
+                    "name": "payToken",
+                    "type": "address"
+                },
+                {
+                    "name": "buyToken",
+                    "type": "address"
+                }
+            ],
+            "name": "getOffers",
+            "outputs": [
+                {
+                    "name": "ids",
+                    "type": "uint256[100]"
+                },
+                {
+                    "name": "payAmts",
+                    "type": "uint256[100]"
+                },
+                {
+                    "name": "buyAmts",
+                    "type": "uint256[100]"
+                },
+                {
+                    "name": "owners",
+                    "type": "address[100]"
+                },
+                {
+                    "name": "timestamps",
+                    "type": "uint256[100]"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
         }
     ]
     """
@@ -91,7 +150,7 @@ if __name__ == "__main__":
             self.state["last_watched_block"] = block_number
 
             # Save the database file for every minute
-            if time.time() - self.last_save > 60:
+            if time.time() - self.last_save > SAVE_INTERVAL:
                 self.save()
 
         def process_event(self, block_when: datetime.datetime, event: AttributeDict) -> str:
@@ -137,6 +196,9 @@ if __name__ == "__main__":
                 # Return a pointer that allows us to look up this event later if needed
                 return f"{block_number}-{txhash}-{log_index}"
 
+    def new_price(price):
+        print(price) # à toi de jouer !!
+
     def run():
         # Enable logs to the stdout.
         # DEBUG is very verbose level
@@ -153,9 +215,21 @@ if __name__ == "__main__":
 
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+        multicall_dex_abi = json.loads(MULTICALL_DEX_ABI)
+        MULTICALL_DEX = w3.eth.contract(MULTICALL_DEX_ADDRESS, abi=multicall_dex_abi)
+
         # Prepare stub ERC-20 contract object
         abi = json.loads(ABI)
         ERC20 = w3.eth.contract(abi=abi)
+
+        price_watcher = PriceWatcher(
+            w3=w3,
+            contract=MULTICALL_DEX
+        )
+
+        price = price_watcher.watch(DEX_ADDRESS, QUOTE_ADDRESS, QUOTE_DECIMALS, BASE_ADDRESS, BASE_DECIMALS)
+
+        new_price(price)
 
         # Restore/create our persistent state
         state = JSONifiedState()
